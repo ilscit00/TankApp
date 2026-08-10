@@ -49,7 +49,9 @@ class FuelRepository {
     }
 
     private fun TankerkoenigStationDto.toStation(fuelType: FuelType): Station {
-        val price = when (fuelType) {
+        // Falls wir eine Typsuche machen (e.g. type=diesel), liefert Tankerkönig den Preis
+        // oft direkt im Feld "price". Falls nicht, nehmen wir das typspezifische Feld.
+        val priceValue = price ?: when (fuelType) {
             FuelType.E5 -> e5
             FuelType.E10 -> e10
             FuelType.DIESEL -> diesel
@@ -65,7 +67,7 @@ class FuelRepository {
             lat = lat,
             lng = lng,
             distanceKm = dist,
-            price = price,
+            price = priceValue,
             isOpen = isOpen
         )
     }

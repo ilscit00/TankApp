@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 object NetworkModule {
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BASIC
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
     private val okHttpClient = OkHttpClient.Builder()

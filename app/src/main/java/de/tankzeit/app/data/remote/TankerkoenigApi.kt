@@ -2,7 +2,11 @@ package de.tankzeit.app.data.remote
 
 import retrofit2.http.GET
 import retrofit2.http.Query
-
+import com.google.gson.TypeAdapter
+import com.google.gson.annotations.JsonAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
+import com.google.gson.stream.JsonWriter
 /**
  * Tankerkönig API (https://creativecommons.tankerkoenig.de)
  * Freier Tarif: max. 10 Anfragen pro Minute pro Key, Umkreissuche 1-25 km.
@@ -46,9 +50,11 @@ data class TankerkoenigStationDto(
     val lat: Double,
     val lng: Double,
     val dist: Double,
-    val diesel: Double?,
-    val e5: Double?,
-    val e10: Double?,
+
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val diesel: Double?,
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val e5: Double?,
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val e10: Double?,
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val price: Double?,
     val isOpen: Boolean
 )
 
@@ -59,7 +65,25 @@ data class TankerkoenigPricesResponse(
 
 data class TankerkoenigPriceDto(
     val status: String?,
-    val diesel: Double?,
-    val e5: Double?,
-    val e10: Double?
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val diesel: Double?,
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val e5: Double?,
+    @JsonAdapter(TankerkoenigPriceAdapter::class) val e10: Double?
 )
+/**
+ * Tankerkönig liefert für diesel/e5/e10 den Wert `false`, wenn aktuell kein
+ * Preis für die Station gemeldet ist - statt einer Zahl. Dieser Adapter
+ * fängt das ab, statt beim Parsen der ganzen Liste abzustürzen.
+ */
+class TankerkoenigPriceAdapter : TypeAdapter<Double?>() {
+    override fun write(out: JsonWriter, value: Double?) {
+        if (value == null) out.nullValue() else out.value(value)
+    }
+    override fun read(reader: JsonReader): Double? {
+        return when (reader.peek()) {
+            JsonToken.NULL -> { reader.nextNull(); null }
+            JsonToken.BOOLEAN -> { reader.nextBoolean(); null } // "false" = kein aktueller Preis
+            JsonToken.NUMBER, JsonToken.STRING -> reader.nextDouble()
+            else -> { reader.skipValue(); null }
+        }
+    }
+}

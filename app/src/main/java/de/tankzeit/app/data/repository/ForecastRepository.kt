@@ -17,7 +17,10 @@ class ForecastRepository {
         if (apiKey.isBlank()) return null
         return try {
             val response = api.brentCrude(apiKey = apiKey)
+            // Datenpunkte filtern (z.B. "." ausschließen) und nach Datum absteigend sortieren,
+            // um sicherzugehen, dass wir die neuesten Werte zuerst haben.
             val points = response.data?.mapNotNull { it.value.toDoubleOrNull()?.let { v -> it.date to v } }
+                ?.sortedByDescending { it.first }
                 ?: return null
             if (points.size < 2) return null
 
