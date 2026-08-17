@@ -1,6 +1,8 @@
 package de.tankzeit.app.ui.screens.preise
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -28,15 +30,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.tankzeit.app.data.model.LocationMode
 import de.tankzeit.app.ui.components.StationCard
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreiseScreen(viewModel: PreiseViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -71,7 +76,18 @@ fun PreiseScreen(viewModel: PreiseViewModel = viewModel()) {
                 else -> StationsList(
                     stations = uiState.stations,
                     isDemoData = uiState.isDemoData,
-                    fuelLabel = uiState.settings.fuelType.label
+                    fuelLabel = uiState.settings.fuelType.label,
+                    onStationClick = { station ->
+                        val uri = String.format(
+                            Locale.US,
+                            "geo:%f,%f?q=%f,%f(%s)",
+                            station.lat, station.lng,
+                            station.lat, station.lng,
+                            Uri.encode(station.brand + " " + station.name)
+                        )
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+                        context.startActivity(intent)
+                    }
                 )
             }
         }
@@ -79,7 +95,12 @@ fun PreiseScreen(viewModel: PreiseViewModel = viewModel()) {
 }
 
 @Composable
-private fun StationsList(stations: List<de.tankzeit.app.data.model.Station>, isDemoData: Boolean, fuelLabel: String) {
+private fun StationsList(
+    stations: List<de.tankzeit.app.data.model.Station>,
+    isDemoData: Boolean,
+    fuelLabel: String,
+    onStationClick: (de.tankzeit.app.data.model.Station) -> Unit
+) {
     val cheapestId = stations.filter { it.price != null }.minByOrNull { it.price!! }?.id
     Column(modifier = Modifier.fillMaxSize()) {
         if (isDemoData) {
@@ -100,7 +121,11 @@ private fun StationsList(stations: List<de.tankzeit.app.data.model.Station>, isD
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(stations, key = { it.id }) { station ->
-                    StationCard(station = station, isCheapest = station.id == cheapestId)
+                    StationCard(
+                        station = station,
+                        isCheapest = station.id == cheapestId,
+                        onClick = { onStationClick(station) }
+                    )
                 }
             }
         }

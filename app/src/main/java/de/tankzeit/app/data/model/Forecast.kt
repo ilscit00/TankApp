@@ -26,8 +26,16 @@ data class ForecastResult(
     val cheapestHourToday: Int,
     val cheapestWeekday: String,
     val oilTrendApplied: Boolean,
-    val oilTrendDampingFactor: Double
+    val oilTrendDampingFactor: Double,
+    val oilPrice: Double? = null,
+    val oilPriceDate: String? = null,
+    val nextDayTrend: PriceTrend = PriceTrend.STABLE,
+    val estimatedPriceTomorrow: Double? = null
 )
+
+enum class PriceTrend {
+    RISING, FALLING, STABLE
+}
 
 /**
  * Brent-Rohöl Trend, optional von Alpha Vantage geladen.

@@ -3,7 +3,9 @@ package de.tankzeit.app.forecast
 import de.tankzeit.app.data.model.ForecastResult
 import de.tankzeit.app.data.model.HourlyForecastPoint
 import de.tankzeit.app.data.model.OilTrend
+import de.tankzeit.app.data.model.PriceTrend
 import de.tankzeit.app.data.model.WeeklyForecastPoint
+import java.time.LocalDate
 
 /**
  * Berechnet die Tages- und Wochenprognose.
@@ -70,13 +72,37 @@ object ForecastEngine {
         val cheapestHour = hourly.minByOrNull { it.relativePriceFactor }?.hour ?: 22
         val cheapestWeekday = weekly.minByOrNull { it.relativePriceFactor }?.dayLabel ?: "Di"
 
+        // Tendenz für morgen berechnen
+        val today = LocalDate.now().dayOfWeek.value // 1 (Mon) to 7 (Sun)
+        val tomorrow = if (today == 7) 1 else today + 1
+        
+        val factorToday = weeklyBasePattern[today] ?: 1.0
+        val factorTomorrow = weeklyBasePattern[tomorrow] ?: 1.0
+        
+        // Ölpreis-Trend mit einbeziehen (falls vorhanden)
+        val oilTrendDaily = (oilTrend?.trendPercent ?: 0.0) / 30.0 // Sehr grobe Annäherung auf Tagesbasis
+        val adjustedFactorTomorrow = factorTomorrow * (1.0 + (oilTrendDaily * OIL_TREND_DAMPING / 100.0))
+
+        val diff = adjustedFactorTomorrow - factorToday
+        val nextDayTrend = when {
+            diff > 0.002 -> PriceTrend.RISING
+            diff < -0.002 -> PriceTrend.FALLING
+            else -> PriceTrend.STABLE
+        }
+
+        val estimatedPriceTomorrow = roundTo3(currentAveragePrice * (adjustedFactorTomorrow / factorToday))
+
         return ForecastResult(
             hourly = hourly,
             weekly = weekly,
             cheapestHourToday = cheapestHour,
             cheapestWeekday = cheapestWeekday,
             oilTrendApplied = oilTrend != null,
-            oilTrendDampingFactor = OIL_TREND_DAMPING
+            oilTrendDampingFactor = OIL_TREND_DAMPING,
+            oilPrice = oilTrend?.latestValue,
+            oilPriceDate = oilTrend?.asOfDate,
+            nextDayTrend = nextDayTrend,
+            estimatedPriceTomorrow = estimatedPriceTomorrow
         )
     }
 

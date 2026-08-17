@@ -1,5 +1,6 @@
 package de.tankzeit.app.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,9 +27,16 @@ import de.tankzeit.app.data.model.Station
 import java.util.Locale
 
 @Composable
-fun StationCard(station: Station, isCheapest: Boolean, modifier: Modifier = Modifier) {
+fun StationCard(
+    station: Station,
+    isCheapest: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = if (isCheapest) MaterialTheme.colorScheme.primaryContainer
             else MaterialTheme.colorScheme.surface
