@@ -47,7 +47,11 @@ object ForecastEngine {
     private const val MAX_OIL_INFLUENCE_PERCENT = 1.5
 
     fun computeForecast(currentAveragePrice: Double, oilTrend: OilTrend?): ForecastResult {
-        val oilInfluencePercent = oilTrend?.let {
+        // Veraltete Trends (> 2 Tage) werden für die Preisberechnung ignoriert,
+        // aber für die Anzeige der Rohdaten (oilPrice/Date) im Resultat behalten.
+        val effectiveOilTrend = if (oilTrend?.isStale == true) null else oilTrend
+        
+        val oilInfluencePercent = effectiveOilTrend?.let {
             (it.trendPercent * OIL_TREND_DAMPING).coerceIn(-MAX_OIL_INFLUENCE_PERCENT, MAX_OIL_INFLUENCE_PERCENT)
         } ?: 0.0
         val oilFactor = 1.0 + (oilInfluencePercent / 100.0)
@@ -79,8 +83,8 @@ object ForecastEngine {
         val factorToday = weeklyBasePattern[today] ?: 1.0
         val factorTomorrow = weeklyBasePattern[tomorrow] ?: 1.0
         
-        // Ölpreis-Trend mit einbeziehen (falls vorhanden)
-        val oilTrendDaily = (oilTrend?.trendPercent ?: 0.0) / 30.0 // Sehr grobe Annäherung auf Tagesbasis
+        // Ölpreis-Trend mit einbeziehen (falls aktuell)
+        val oilTrendDaily = (effectiveOilTrend?.trendPercent ?: 0.0) / 30.0
         val adjustedFactorTomorrow = factorTomorrow * (1.0 + (oilTrendDaily * OIL_TREND_DAMPING / 100.0))
 
         val diff = adjustedFactorTomorrow - factorToday
@@ -97,7 +101,7 @@ object ForecastEngine {
             weekly = weekly,
             cheapestHourToday = cheapestHour,
             cheapestWeekday = cheapestWeekday,
-            oilTrendApplied = oilTrend != null,
+            oilTrendApplied = effectiveOilTrend != null,
             oilTrendDampingFactor = OIL_TREND_DAMPING,
             oilPrice = oilTrend?.latestValue,
             oilPriceDate = oilTrend?.asOfDate,

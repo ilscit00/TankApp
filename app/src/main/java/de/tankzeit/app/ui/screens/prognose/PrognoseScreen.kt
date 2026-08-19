@@ -67,7 +67,9 @@ fun PrognoseScreen(viewModel: PrognoseViewModel = viewModel()) {
                 )
                 uiState.forecast != null -> PrognoseContent(
                     forecast = uiState.forecast!!,
-                    oilTrendUsed = uiState.oilTrendUsed
+                    oilTrendUsed = uiState.oilTrendUsed,
+                    oilTrendStatus = uiState.oilTrendStatus,
+                    oilTrendIsStale = uiState.oilTrendIsStale
                 )
             }
         }
@@ -77,7 +79,9 @@ fun PrognoseScreen(viewModel: PrognoseViewModel = viewModel()) {
 @Composable
 private fun PrognoseContent(
     forecast: de.tankzeit.app.data.model.ForecastResult,
-    oilTrendUsed: Boolean
+    oilTrendUsed: Boolean,
+    oilTrendStatus: String? = null,
+    oilTrendIsStale: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -85,6 +89,24 @@ private fun PrognoseContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        if (oilTrendStatus != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (oilTrendIsStale) MaterialTheme.colorScheme.errorContainer 
+                                    else MaterialTheme.colorScheme.tertiaryContainer
+                )
+            ) {
+                Text(
+                    text = oilTrendStatus,
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (oilTrendIsStale) MaterialTheme.colorScheme.onErrorContainer 
+                            else MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        }
+
         MarketAnalysisCard(forecast)
         
         Spacer(modifier = Modifier.height(24.dp))

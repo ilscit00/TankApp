@@ -24,7 +24,8 @@ data class AlphaVantageResponse(
     val unit: String?,
     val data: List<AlphaVantageDataPoint>?,
     @com.google.gson.annotations.SerializedName("Error Message") val errorMessage: String?,
-    @com.google.gson.annotations.SerializedName("Note") val note: String?
+    @com.google.gson.annotations.SerializedName("Note") val note: String?,
+    @com.google.gson.annotations.SerializedName("Information") val information: String?
 )
 
 data class AlphaVantageDataPoint(

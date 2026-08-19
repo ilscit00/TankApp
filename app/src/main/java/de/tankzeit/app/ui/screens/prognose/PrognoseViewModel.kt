@@ -22,6 +22,8 @@ data class PrognoseUiState(
     val forecast: ForecastResult? = null,
     val currentAveragePrice: Double? = null,
     val oilTrendUsed: Boolean = false,
+    val oilTrendStatus: String? = null,
+    val oilTrendIsStale: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -75,6 +77,8 @@ class PrognoseViewModel(application: Application) : AndroidViewModel(application
                 forecast = forecast,
                 currentAveragePrice = averagePrice,
                 oilTrendUsed = oilTrend != null,
+                oilTrendStatus = oilTrend?.statusMessage,
+                oilTrendIsStale = oilTrend?.isStale ?: false,
                 errorMessage = null
             )
         }

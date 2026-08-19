@@ -44,5 +44,7 @@ enum class PriceTrend {
 data class OilTrend(
     val trendPercent: Double,
     val latestValue: Double,
-    val asOfDate: String
+    val asOfDate: String,
+    val statusMessage: String? = null,
+    val isStale: Boolean = false
 )
