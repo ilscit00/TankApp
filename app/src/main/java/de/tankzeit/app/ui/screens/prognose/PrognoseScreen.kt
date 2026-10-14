@@ -153,7 +153,7 @@ private fun PrognoseContent(
             text = if (oilTrendUsed) {
                 "Basis: dokumentiertes ADAC/MTS-K Tagesmuster, leicht angepasst durch den aktuellen Brent-Rohölpreistrend."
             } else {
-                "Basis: dokumentiertes ADAC/MTS-K Tagesmuster. Hinterlege einen Alpha-Vantage-Key für eine zusätzliche Ölpreis-Anpassung."
+                "Basis: dokumentiertes ADAC/MTS-K Tagesmuster. Hinterlege einen OilPriceAPI-Key für eine zusätzliche Ölpreis-Anpassung."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant

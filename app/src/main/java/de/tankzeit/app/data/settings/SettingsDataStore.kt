@@ -24,17 +24,19 @@ class SettingsDataStore(private val context: Context) {
         val POSTAL_CODE = stringPreferencesKey("postal_code")
         val RADIUS_KM = doublePreferencesKey("radius_km")
         val TANKERKOENIG_API_KEY = stringPreferencesKey("tankerkoenig_api_key")
+        val OIL_PRICE_API_KEY = stringPreferencesKey("oil_price_api_key")
         val ALPHA_VANTAGE_API_KEY = stringPreferencesKey("alpha_vantage_api_key")
     }
 
     val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { prefs ->
+        val oilKey = prefs[Keys.OIL_PRICE_API_KEY] ?: prefs[Keys.ALPHA_VANTAGE_API_KEY] ?: ""
         AppSettings(
             fuelType = FuelType.valueOf(prefs[Keys.FUEL_TYPE] ?: FuelType.E10.name),
             locationMode = LocationMode.valueOf(prefs[Keys.LOCATION_MODE] ?: LocationMode.POSTAL_CODE.name),
             postalCode = prefs[Keys.POSTAL_CODE] ?: "",
             radiusKm = prefs[Keys.RADIUS_KM] ?: 5.0,
             tankerkoenigApiKey = prefs[Keys.TANKERKOENIG_API_KEY] ?: "",
-            alphaVantageApiKey = prefs[Keys.ALPHA_VANTAGE_API_KEY] ?: ""
+            oilPriceApiKey = oilKey
         )
     }
 
@@ -58,9 +60,15 @@ class SettingsDataStore(private val context: Context) {
         context.dataStore.edit { it[Keys.TANKERKOENIG_API_KEY] = key }
     }
 
-    suspend fun setAlphaVantageApiKey(key: String) {
-        context.dataStore.edit { it[Keys.ALPHA_VANTAGE_API_KEY] = key }
+    suspend fun setOilPriceApiKey(key: String) {
+        context.dataStore.edit {
+            it[Keys.OIL_PRICE_API_KEY] = key
+            it[Keys.ALPHA_VANTAGE_API_KEY] = key
+        }
     }
+
+    @Deprecated("Verwende setOilPriceApiKey", ReplaceWith("setOilPriceApiKey(key)"))
+    suspend fun setAlphaVantageApiKey(key: String) = setOilPriceApiKey(key)
 }
 
 data class AppSettings(
@@ -69,8 +77,9 @@ data class AppSettings(
     val postalCode: String = "",
     val radiusKm: Double = 5.0,
     val tankerkoenigApiKey: String = "",
-    val alphaVantageApiKey: String = ""
+    val oilPriceApiKey: String = ""
 ) {
     val hasTankerkoenigKey: Boolean get() = tankerkoenigApiKey.isNotBlank()
-    val hasAlphaVantageKey: Boolean get() = alphaVantageApiKey.isNotBlank()
+    val hasOilPriceKey: Boolean get() = oilPriceApiKey.isNotBlank()
+    val alphaVantageApiKey: String get() = oilPriceApiKey
 }

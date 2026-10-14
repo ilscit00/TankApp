@@ -8,62 +8,52 @@ import java.time.temporal.ChronoUnit
 
 class ForecastRepository {
 
-    private val api = NetworkModule.alphaVantageApi
+    private val api = NetworkModule.oilPriceApi
 
     /**
-     * Lädt die letzten Brent-Rohöl-Datenpunkte und berechnet einen einfachen
-     * Trend. Prüft auf API-Meldungen (Limit, Fehler) und Aktualität der Daten.
+     * Lädt den aktuellen Brent-Rohölpreis von OilPriceAPI und berechnet
+     * den Trend anhand der 24h-Veränderung.
      */
     suspend fun fetchOilTrend(apiKey: String): OilTrend? {
         if (apiKey.isBlank()) return null
         return try {
-            val response = api.brentCrude(apiKey = apiKey)
+            val authHeader = if (apiKey.trim().startsWith("Token ", ignoreCase = true)) apiKey.trim() else "Token ${apiKey.trim()}"
+            val response = api.getLatestPrice(authHeader = authHeader)
 
-            // API Status prüfen
-            val apiNote = response.errorMessage ?: response.note ?: response.information
-            var statusMessage = when {
-                apiNote?.contains("rate limit", ignoreCase = true) == true -> "API Limit erreicht"
-                apiNote != null -> "AlphaVantage Info: $apiNote"
-                else -> null
+            if (response.status != "success" || response.data == null) {
+                return OilTrend(0.0, 0.0, "", response.status ?: "OilPriceAPI Fehler")
             }
 
-            // Typ der Daten (Daily/Monthly) prüfen
-            val isMonthly = response.interval?.contains("monthly", ignoreCase = true) == true
-            if (isMonthly && statusMessage == null) {
-                statusMessage = "Hinweis: Nur Monatsdaten verfügbar"
+            val data = response.data
+            val price = data.price ?: return null
+
+            val trendPercent = data.changes?.h24?.percent ?: run {
+                val prev = data.changes?.h24?.previousPrice
+                if (prev != null && prev > 0.0) {
+                    ((price - prev) / prev) * 100.0
+                } else 0.0
             }
 
-            // Datenpunkte filtern und sortieren
-            val points = response.data?.mapNotNull { 
-                if (it.value == ".") null else it.value.toDoubleOrNull()?.let { v -> it.date to v } 
-            }?.sortedByDescending { it.first }
-                ?: return if (statusMessage != null) OilTrend(0.0, 0.0, "", statusMessage) else null
+            val rawAsOf = data.asOf ?: data.updatedAt ?: data.createdAt
+            val asOfDate = rawAsOf?.take(10) ?: LocalDate.now().toString()
 
-            if (points.isEmpty()) return if (statusMessage != null) OilTrend(0.0, 0.0, "", statusMessage) else null
-
-            val recent = points.take(5)
-            val newest = recent.first()
-            val oldest = recent.last()
-
-            // Aktualität prüfen (max 3 Tage alt, da am Wochenende oft keine Updates)
-            val asOfDate = newest.first
-            val isStale = try {
+            val isStale = data.stale == true || try {
                 val date = LocalDate.parse(asOfDate, DateTimeFormatter.ISO_LOCAL_DATE)
-                val diff = ChronoUnit.DAYS.between(date, LocalDate.now())
-                diff > 3
+                ChronoUnit.DAYS.between(date, LocalDate.now()) > 3
             } catch (e: Exception) {
                 false
             }
 
-            val trendPercent = if (recent.size >= 2 && oldest.second != 0.0) {
-                ((newest.second - oldest.second) / oldest.second) * 100.0
-            } else 0.0
+            val statusMsg = when {
+                isStale -> "Daten veraltet (Stand $asOfDate)"
+                else -> null
+            }
 
             OilTrend(
                 trendPercent = trendPercent,
-                latestValue = newest.second,
+                latestValue = price,
                 asOfDate = asOfDate,
-                statusMessage = if (isStale) "Daten veraltet (Stand $asOfDate)" else statusMessage,
+                statusMessage = statusMsg,
                 isStale = isStale
             )
         } catch (e: Exception) {

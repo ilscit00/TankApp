@@ -69,7 +69,7 @@ class PrognoseViewModel(application: Application) : AndroidViewModel(application
                 is StationsResult.Error -> null
             } ?: fallbackAveragePrice(settings.fuelType)
 
-            val oilTrend = forecastRepository.fetchOilTrend(settings.alphaVantageApiKey)
+            val oilTrend = forecastRepository.fetchOilTrend(settings.oilPriceApiKey)
             val forecast = ForecastEngine.computeForecast(averagePrice, oilTrend)
 
             _uiState.value = _uiState.value.copy(

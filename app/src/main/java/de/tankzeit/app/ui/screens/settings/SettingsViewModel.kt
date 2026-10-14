@@ -26,5 +26,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setPostalCode(postalCode: String) = viewModelScope.launch { settingsStore.setPostalCode(postalCode) }
     fun setRadiusKm(radiusKm: Double) = viewModelScope.launch { settingsStore.setRadiusKm(radiusKm) }
     fun setTankerkoenigApiKey(key: String) = viewModelScope.launch { settingsStore.setTankerkoenigApiKey(key) }
-    fun setAlphaVantageApiKey(key: String) = viewModelScope.launch { settingsStore.setAlphaVantageApiKey(key) }
+    fun setOilPriceApiKey(key: String) = viewModelScope.launch { settingsStore.setOilPriceApiKey(key) }
+    @Deprecated("Verwende setOilPriceApiKey", ReplaceWith("setOilPriceApiKey(key)"))
+    fun setAlphaVantageApiKey(key: String) = setOilPriceApiKey(key)
 }

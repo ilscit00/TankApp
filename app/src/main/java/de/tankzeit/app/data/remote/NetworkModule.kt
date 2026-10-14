@@ -31,12 +31,12 @@ object NetworkModule {
             .create(TankerkoenigApi::class.java)
     }
 
-    val alphaVantageApi: AlphaVantageApi by lazy {
+    val oilPriceApi: OilPriceApi by lazy {
         Retrofit.Builder()
-            .baseUrl("https://www.alphavantage.co/")
+            .baseUrl("https://api.oilpriceapi.com/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AlphaVantageApi::class.java)
+            .create(OilPriceApi::class.java)
     }
 }

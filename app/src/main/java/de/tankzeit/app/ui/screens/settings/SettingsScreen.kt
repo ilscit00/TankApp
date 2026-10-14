@@ -107,10 +107,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             ApiKeyField(
-                label = "Alpha Vantage API-Key (optional)",
-                value = settings.alphaVantageApiKey,
-                onValueChange = viewModel::setAlphaVantageApiKey,
-                helperText = "Kostenlos erhältlich auf alphavantage.co – verfeinert die Prognose mit dem Ölpreistrend."
+                label = "OilPriceAPI API-Key (optional)",
+                value = settings.oilPriceApiKey,
+                onValueChange = viewModel::setOilPriceApiKey,
+                helperText = "Kostenlos erhältlich auf oilpriceapi.com – verfeinert die Prognose mit dem Ölpreistrend."
             )
         }
     }

@@ -10,26 +10,27 @@ import java.time.LocalDate
 /**
  * Berechnet die Tages- und Wochenprognose.
  *
- * Grundlage ist das von ADAC und dem Marktransparenzstelle für Kraftstoffe
- * (MTS-K) wiederholt dokumentierte Tagesmuster deutscher Kraftstoffpreise:
- * morgens (ca. 6-9 Uhr) am teuersten, im Tagesverlauf mehrere kleinere
- * Wellen, am günstigsten meist spät abends / in der Nacht (ca. 20-24 Uhr).
- * Wochentagsmuster: Montag/Dienstag tendenziell günstiger, das Wochenende
- * (insbesondere Freitag-Sonntag) tendenziell teurer.
+ * Grundlage ist das von ADAC und der Markttransparenzstelle für Kraftstoffe
+ * (MTS-K) dokumentierte Tagesmuster deutscher Kraftstoffpreise:
+ * Morgens (ca. 6-8 Uhr) am teuersten, gefolgt von stufenweisen Preissenkungen
+ * mit prägnanten Preisanpassungs-Sprüngen (insbesondere der markanten Erhöhung
+ * um 12 Uhr sowie weiteren kleineren Wellen am Nachmittag).
+ * Am günstigsten ist es meist am späten Abend (ca. 20-22 Uhr).
  *
- * Der optionale Brent-Rohölpreistrend (Alpha Vantage) wird nur als leicht
+ * Der optionale Brent-Rohölpreistrend (OilPriceAPI) wird als leicht
  * gedämpfter Faktor eingerechnet, damit kurzfristige Rohstoff-Volatilität
  * die robuste Tagesmusterkurve nicht überzeichnet.
  */
 object ForecastEngine {
 
-    // Relative Faktoren pro Stunde, empirisch an ADAC/MTS-K-Veröffentlichungen angelehnt.
-    // 1.0 = Tagesdurchschnitt. Werte sind bewusst moderat gehalten.
+    // Relative Faktoren pro Stunde, angelehnt an aktuelle ADAC/MTS-K Auswertungen.
+    // 1.0 = Tagesdurchschnitt.
+    // Beachtet die gesetzlich/marktüblichen Preiswellen inklusive der Erhöhung um 12 Uhr.
     private val hourlyBasePattern: Map<Int, Double> = mapOf(
-        0 to 0.975, 1 to 0.970, 2 to 0.968, 3 to 0.967, 4 to 0.970, 5 to 0.985,
-        6 to 1.020, 7 to 1.040, 8 to 1.035, 9 to 1.015, 10 to 1.000, 11 to 0.998,
-        12 to 1.005, 13 to 1.010, 14 to 1.008, 15 to 1.005, 16 to 1.010, 17 to 1.015,
-        18 to 1.005, 19 to 0.995, 20 to 0.985, 21 to 0.978, 22 to 0.972, 23 to 0.970
+        0 to 0.978, 1 to 0.975, 2 to 0.972, 3 to 0.970, 4 to 0.972, 5 to 0.990,
+        6 to 1.045, 7 to 1.050, 8 to 1.030, 9 to 1.015, 10 to 1.002, 11 to 0.992,
+        12 to 1.032, 13 to 1.018, 14 to 1.008, 15 to 1.015, 16 to 1.008, 17 to 1.020,
+        18 to 1.010, 19 to 0.998, 20 to 0.980, 21 to 0.968, 22 to 0.965, 23 to 0.972
     )
 
     // Relativer Faktor pro Wochentag (1=Montag ... 7=Sonntag).
